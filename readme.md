@@ -1,5 +1,7 @@
 # De-Geminizer WP
 
+[![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=fff)](#) [![WordPress](https://img.shields.io/badge/WordPress-21759B?style=for-the-badge&logo=wordpress&logoColor=fff)](#) [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=000)](#) [![CSS](https://img.shields.io/badge/CSS-1572B6?style=for-the-badge&logo=css3&logoColor=fff)](#) [![GPLv2](https://img.shields.io/badge/License-GPL%20v2-3DA639?style=for-the-badge&logo=gnu&logoColor=fff)](#)
+
 > Elimina el watermark ✦ de Gemini (Google AI) de las imágenes de tu Mediateca con un clic — individual o en bulk — usando **inpainting con máscara**.
 
 | | |
@@ -88,7 +90,7 @@ El pipeline de eliminación consta de 5 etapas:
 | 1 | **Zona de búsqueda** | Recuadro ~15% del lado menor en la esquina seleccionada (o las 4 esquinas en modo auto). |
 | 2 | **Máscara adaptativa** | Selecciona píxeles con `R,G,B > 200`, neutros (`max−min < 45`), y por encima del percentil 90 de brillo local. |
 | 3 | **Dilatación** | 3 iteraciones de morfología 8-conexa para atrapar anti-aliasing y glow. |
-| 4 | **Onion-peel fill** | Cada pasada rellena los píxeles del borde con promedio gaussiano (σ = radio/2) de vecinos no-marcados; los rellenados sirven de fuente en la siguiente. |
+| 4 | **Onion-peel fill** | Cada passada rellena los píxeles del borde con promedio gaussiano (σ = radio/2) de vecinos no-marcados; los rellenados sirven de fuente en la siguiente. |
 | 5 | **Suavizado local** | Gaussian blur aplicado **solo** sobre los píxeles reparados para fundir transiciones. El resto de la imagen no se toca. |
 
 ### Auto-detección
@@ -102,7 +104,7 @@ Puntúa cada esquina por número de píxeles compatibles con la máscara y elige
 <details>
 <summary><strong>¿Puedo deshacer los cambios?</strong></summary>
 
-Sí. La primera vez que procesas una imagen, el plugin guarda una copia del archivo original junto al actual (`mi-foto.dgz-backup.jpg`). Pulsa **"Restaurar original"** en el panel del adjunto, o usa la bulk action **"Restaurar original (De-Geminizer)"**.
+Sí. La primeira volta que processas uma imagem, o plugin guarda uma cópia do arquivo original junto ao atual (`mi-foto.dgz-backup.jpg`). Pulsa **"Restaurar original"** en el panel del adjunto, o usa la bulk action **"Restaurar original (De-Geminizer)"**.
 </details>
 
 <details>
