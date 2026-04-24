@@ -9,7 +9,7 @@
 | **Testeado hasta** | 6.5 |
 | **Requiere PHP** | 7.4+ (con extensión GD) |
 | **Licencia** | GPL-2.0-or-later |
-| **Autor** | TransfersPremium |
+| **Autor** | Raul Santos |
 
 ---
 
@@ -210,4 +210,4 @@ Posiciones aceptadas: `'auto'`, `'bottom-right'`, `'bottom-left'`, `'top-right'`
 
 ## Licencia
 
-[GPL-2.0-or-later](https://www.gnu.org/licenses/gpl-2.0.html) © TransfersPremium
+[GPL-2.0-or-later](https://www.gnu.org/licenses/gpl-2.0.html) © Raul Santos
