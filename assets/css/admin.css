@@ -1,0 +1,32 @@
+.dgz-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.dgz-wrap .dgz-position-select {
+    min-width: 140px;
+}
+
+.dgz-wrap .dgz-remove-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.dgz-wrap .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 1;
+}
+
+.dgz-status {
+    font-size: 12px;
+    margin-left: 4px;
+}
+
+.dgz-status.dgz-loading { color: #2271b1; }
+.dgz-status.dgz-success { color: #00a32a; font-weight: 600; }
+.dgz-status.dgz-error   { color: #d63638; }
