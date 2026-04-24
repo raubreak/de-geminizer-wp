@@ -2,6 +2,8 @@
 
 [![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4.svg)](https://www.php.net/)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6%2B-f7df1e.svg)](https://developer.mozilla.org/es/docs/Web/JavaScript)
+[![CSS](https://img.shields.io/badge/CSS-3-1572b6.svg)](https://developer.mozilla.org/es/docs/Web/CSS)
 [![License](https://img.shields.io/badge/license-GPLv2-green.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 
 > Elimina el watermark ✦ de Gemini (Google AI) de las imágenes de tu Mediateca con un clic — individual o en bulk — usando **inpainting con máscara**.
