@@ -33,7 +33,7 @@ jobs:
         run: |
           PLUGIN_VERSION="$(sed -n 's/^ \* Version:[[:space:]]*//p' wp-gemini-watermark-remover.php | head -n 1 | xargs)"
           CONST_VERSION="$(sed -n "s/^define('DGZ_VERSION', '\([^']*\)');$/\1/p" wp-gemini-watermark-remover.php | head -n 1)"
-          README_VERSION="$(sed -n 's/^| \*\*Versión\*\* | //p' readme.md | head -n 1 | xargs)"
+          README_VERSION="$(awk -F'|' '/^\| \*\*Versión\*\* \|/ { gsub(/^[[:space:]]+|[[:space:]]+$/, "", $3); print $3; exit }' readme.md)"
           TAG_VERSION="${{ steps.meta.outputs.version }}"
 
           test -n "$PLUGIN_VERSION"
