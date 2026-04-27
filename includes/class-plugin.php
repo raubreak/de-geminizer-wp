@@ -30,6 +30,15 @@ class DGZ_Plugin {
         add_filter('bulk_actions-upload',        [$this, 'register_bulk_actions']);
         add_filter('handle_bulk_actions-upload', [$this, 'handle_bulk_actions'], 10, 3);
         add_action('admin_notices',              [$this, 'bulk_admin_notices']);
+
+        // Enlace "Configuración" en la fila del plugin.
+        add_filter('plugin_action_links_' . plugin_basename(DGZ_PLUGIN_FILE), [$this, 'plugin_action_links']);
+    }
+
+    public function plugin_action_links($links) {
+        $url = admin_url('options-general.php?page=' . DGZ_Settings::PAGE);
+        array_unshift($links, '<a href="' . esc_url($url) . '">' . esc_html__('Configuración', 'wp-gemini-watermark-remover') . '</a>');
+        return $links;
     }
 
     public function enqueue_admin_assets() {
@@ -129,8 +138,8 @@ class DGZ_Plugin {
             update_post_meta($attachment_id, '_dgz_backup_path', $backup_path);
         }
 
-        $remover = new DGZ_Watermark_Remover();
-        $result  = $remover->remove($file, $position);
+        $engine_used = 'algorithm';
+        $result      = self::process_image($file, $position, $engine_used);
 
         if (is_wp_error($result)) {
             wp_send_json_error(['message' => $result->get_error_message()], 500);
@@ -140,9 +149,48 @@ class DGZ_Plugin {
         $this->regenerate_metadata($attachment_id, $file);
 
         wp_send_json_success([
-            'message' => __('Watermark eliminado.', 'wp-gemini-watermark-remover'),
+            'message' => sprintf(
+                /* translators: %s: motor utilizado */
+                __('Watermark eliminado (motor: %s).', 'wp-gemini-watermark-remover'),
+                $engine_used
+            ),
+            'engine'  => $engine_used,
             'url'     => add_query_arg('t', time(), wp_get_attachment_url($attachment_id)),
         ]);
+    }
+
+    /**
+     * Despachador único: elige motor según settings, intenta el provider IA
+     * si está configurado y, si falla, cae al algoritmo local. Devuelve true
+     * o WP_Error. Asigna por referencia el nombre del motor que funcionó.
+     */
+    public static function process_image($file, $position, &$engine_used = null) {
+        $engine_used = 'algorithm';
+        $effective   = DGZ_Settings::effective_engine();
+
+        if ($effective === 'gemini') {
+            $opts = DGZ_Settings::get();
+            $provider = new DGZ_Gemini_Provider($opts['gemini_key'], $opts['gemini_model']);
+            $r = $provider->inpaint($file, $position);
+            if (!is_wp_error($r)) {
+                $engine_used = 'gemini';
+                return true;
+            }
+            // Fallback al algoritmo local; logueamos el error de la API.
+            error_log('[De-Geminizer] Gemini falló, fallback al algoritmo local: ' . $r->get_error_message());
+        } elseif ($effective === 'openai') {
+            $opts = DGZ_Settings::get();
+            $provider = new DGZ_OpenAI_Provider($opts['openai_key'], $opts['openai_model']);
+            $r = $provider->inpaint($file, $position);
+            if (!is_wp_error($r)) {
+                $engine_used = 'openai';
+                return true;
+            }
+            error_log('[De-Geminizer] OpenAI falló, fallback al algoritmo local: ' . $r->get_error_message());
+        }
+
+        $remover = new DGZ_Watermark_Remover();
+        return $remover->remove($file, $position);
     }
 
     public function ajax_restore_original() {
@@ -288,8 +336,8 @@ class DGZ_Plugin {
                     update_post_meta($attachment_id, '_dgz_backup_path', $backup_path);
                 }
 
-                $remover = new DGZ_Watermark_Remover();
-                $result  = $remover->remove($file, 'auto');
+                $engine_used = 'algorithm';
+                $result      = self::process_image($file, 'auto', $engine_used);
                 if (is_wp_error($result)) {
                     $failed++;
                     continue;

@@ -225,8 +225,10 @@ class DGZ_Watermark_Remover {
             }
         }
 
-        // 6) Suavizado muy ligero solo sobre la región reparada para fundir transiciones.
-        $this->local_smooth($img, $bx, $by, $bw, $bh, $mask, 1);
+        // 6) Blend alpha-feathered: difumina la frontera del relleno con el entorno
+        //    para que no quede línea visible entre píxeles tocados/no tocados.
+        $bx = $bbox['x']; $by = $bbox['y'];
+        $this->feathered_blend($img, $bx, $by, $bw, $bh, $mask);
 
         return true;
     }
@@ -334,34 +336,71 @@ class DGZ_Watermark_Remover {
     }
 
     /**
-     * Aplica un gaussian blur solo sobre el bbox, y copia de vuelta únicamente
-     * los píxeles originalmente enmascarados. Así los píxeles ajenos al watermark
-     * permanecen idénticos al original.
+     * Difuminado avanzado: en lugar de cortar bruscamente entre la zona reparada
+     * y el resto, construye una máscara con bordes "feathered" (gaussian blur
+     * sobre el mask binario) y compone una versión suavemente desenfocada del
+     * bbox sobre el original usando esa máscara como alpha.
+     *
+     * Resultado: la transición watermark→fondo es un gradiente suave en lugar
+     * de una arista visible. Los píxeles lejos del mask no se modifican.
      */
-    private function local_smooth($img, $bx, $by, $bw, $bh, $mask, $passes) {
-        if ($passes <= 0 || !function_exists('imagefilter')) return;
+    private function feathered_blend($img, $bx, $by, $bw, $bh, $mask) {
+        if (!function_exists('imagefilter')) return;
 
-        $sub = imagecreatetruecolor($bw, $bh);
-        imagealphablending($sub, false);
-        imagesavealpha($sub, true);
-        imagecopy($sub, $img, 0, 0, $bx, $by, $bw, $bh);
-        for ($i = 0; $i < $passes; $i++) {
-            @imagefilter($sub, IMG_FILTER_GAUSSIAN_BLUR);
-        }
-
+        // 1) Construir una máscara visual (escala de grises) a partir del mask binario.
+        $alpha_canvas = imagecreatetruecolor($bw, $bh);
+        imagealphablending($alpha_canvas, false);
+        $black = imagecolorallocate($alpha_canvas, 0, 0, 0);
+        imagefilledrectangle($alpha_canvas, 0, 0, $bw - 1, $bh - 1, $black);
         for ($y = 0; $y < $bh; $y++) {
             for ($x = 0; $x < $bw; $x++) {
-                $i = $y * $bw + $x;
-                if (empty($mask[$i])) continue;
-                $rgb = imagecolorat($sub, $x, $y);
-                $rr = ($rgb >> 16) & 0xFF;
-                $gg = ($rgb >> 8) & 0xFF;
-                $bb = $rgb & 0xFF;
-                $color = imagecolorallocate($img, $rr, $gg, $bb);
-                imagesetpixel($img, $bx + $x, $by + $y, $color);
+                if (!empty($mask[$y * $bw + $x])) {
+                    imagesetpixel($alpha_canvas, $x, $y, 0xFFFFFF);
+                }
             }
         }
-        imagedestroy($sub);
+
+        // 2) Aplicar gaussian blur varias veces para crear un degradado suave en el borde.
+        //    Cuanto más se difumine, más amplio el feathering (más natural el resultado).
+        for ($i = 0; $i < 5; $i++) {
+            @imagefilter($alpha_canvas, IMG_FILTER_GAUSSIAN_BLUR);
+        }
+
+        // 3) Versión suavizada del bbox. Esta será la "capa superior" que se mezclará
+        //    sobre el original con la máscara feathered.
+        $smoothed = imagecreatetruecolor($bw, $bh);
+        imagealphablending($smoothed, false);
+        imagecopy($smoothed, $img, 0, 0, $bx, $by, $bw, $bh);
+        @imagefilter($smoothed, IMG_FILTER_GAUSSIAN_BLUR);
+        @imagefilter($smoothed, IMG_FILTER_GAUSSIAN_BLUR);
+
+        // 4) Composite: por cada píxel, mezclar (smoothed * alpha) + (original * (1-alpha)).
+        for ($y = 0; $y < $bh; $y++) {
+            for ($x = 0; $x < $bw; $x++) {
+                $arGB = imagecolorat($alpha_canvas, $x, $y);
+                $alpha = ($arGB & 0xFF) / 255.0; // canal B (escala de grises)
+                if ($alpha < 0.005) continue; // píxel intacto
+
+                $orig = imagecolorat($img, $bx + $x, $by + $y);
+                $or = ($orig >> 16) & 0xFF;
+                $og = ($orig >> 8) & 0xFF;
+                $ob = $orig & 0xFF;
+
+                $sm = imagecolorat($smoothed, $x, $y);
+                $sr = ($sm >> 16) & 0xFF;
+                $sg = ($sm >> 8) & 0xFF;
+                $sb = $sm & 0xFF;
+
+                $r = (int) round($or * (1 - $alpha) + $sr * $alpha);
+                $g = (int) round($og * (1 - $alpha) + $sg * $alpha);
+                $b = (int) round($ob * (1 - $alpha) + $sb * $alpha);
+
+                imagesetpixel($img, $bx + $x, $by + $y, ($r << 16) | ($g << 8) | $b);
+            }
+        }
+
+        imagedestroy($alpha_canvas);
+        imagedestroy($smoothed);
     }
 
     /* ---------- Fallback: clone-stamp ---------- */

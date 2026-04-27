@@ -10,7 +10,7 @@
 
 | | |
 |---|---|
-| **Versión** | 1.0.0 |
+| **Versión** | 1.1.0 |
 | **Requiere WordPress** | 5.8+ |
 | **Testeado hasta** | 6.5 |
 | **Requiere PHP** | 7.4+ (con extensión GD) |
@@ -198,6 +198,18 @@ Posiciones aceptadas: `'auto'`, `'bottom-right'`, `'bottom-left'`, `'top-right'`
 ---
 
 ## Changelog
+
+### 1.1.0
+
+- **Página de configuración** en `Ajustes → De-Geminizer WP` (Settings API).
+- **Soporte para Google Gemini API** (modelo `gemini-2.5-flash-image-preview`, "Nano Banana") como motor de inpainting.
+- **Soporte para OpenAI Images API** (`/v1/images/edits` con máscara PNG) como motor alternativo.
+- **Fallback automático** al algoritmo local si la API falla, da error o no tiene token configurado.
+- **Difuminado mejorado**: nuevo método `feathered_blend()` con máscara alpha-feathered (gaussian sobre el mask) para eliminar la costura visible entre la zona reparada y el entorno.
+- **Auto-detección de esquina** (puntúa las 4 esquinas y elige la de mayor densidad de píxeles candidatos).
+- **Bulk actions** completas en la Mediateca con dispatcher unificado (IA o algoritmo según ajustes).
+- Enlace **"Configuración"** en la fila del plugin.
+- Respuesta AJAX ahora incluye el motor utilizado (`engine: 'gemini'|'openai'|'algorithm'`).
 
 ### 1.0.0
 
